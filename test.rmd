@@ -1,0 +1,64 @@
+---
+title: "Data cleaning"
+output: html_document
+date: '2024-03-01'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(pheatmap)
+library(plotly)
+library(ggfortify)
+```
+
+```{r import dataset}
+gtex = read.delim(file = "gene_exp.gct", header = TRUE, row.names = 1, skip = 2)
+```
+
+```{r}
+matrix  =  subset(gtex, select = -c(2))
+row.names(matrix) = matrix[,1]
+matrix  =  subset(matrix, select = -c(1))
+```
+
+```{r data cleaning}
+gtex  = gtex %>% mutate(mean = rowMeans(matrix))
+gtex = gtex %>% filter(mean > 500)
+```
+
+```{r}
+matrix  =  subset(gtex, select = -c(2))
+row.names(matrix) = matrix[,1]
+cleaned_data  =  subset(matrix, select = -c(1))
+write.csv(cleaned_data, "cleaned_data.csv")
+```
+
+```{r}
+matrix = t(cleaned_data)
+corr = cor(matrix)
+```
+
+```{r}
+pheatmap(corr, show_rownames = FALSE,  cluster_rows = FALSE,cluster_cols = FALSE,  show_colnames = FALSE, main = "Gene Expression Correlations")
+```
+
+
+```{r}
+pca  =  prcomp(matrix)
+ggplotly(autoplot(pca, data = matrix, loadings = TRUE, loadings.label = TRUE, loadings.label.size = 1), annotationTail = TRUE)
+
+```
+
+
+```{r}
+cleaned_dataT = data.frame(t(cleaned_data))
+cleaned_dataT$mean = rowMeans(cleaned_dataT)
+fig <- plot_ly(cleaned_dataT, x = ~ENSG00000210082.2, y = ~ENSG00000198712.1
+, z = ~ENSG00000198804.2, mode = "markers", color = ~mean)
+fig
+
+```
