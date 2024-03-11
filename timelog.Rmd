@@ -1,0 +1,20 @@
+---
+title: "Timelog"
+output: html_document
+date: "2024-03-11"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+time_log = read_csv("timelog_total.csv")
+```
+```{r}
+
+ggplot(time_log, aes(x="", y=Time, fill=TASK)) +
+  geom_bar(stat="identity", width=1) +
+  coord_polar("y", start=0)
+
+```
