@@ -1,0 +1,97 @@
+---
+title: "Data cleaning"
+output: html_document
+date: '2024-03-01'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(pheatmap)
+library(heatmaply)
+library(plotly)
+library(ggfortify)
+library(RColorBrewer)
+library("factoextra")
+library(canvasXpress)
+```
+
+```{r import dataset}
+gtex = read.delim(file = "gene_exp.gct", header = TRUE, row.names = 1, skip = 2)
+full_exp = read.csv("datafull_w_demograph.csv", row.names = 1)
+```
+
+```{r}
+#Change gender to cateogorical variable
+full_exp$gender <- ifelse(full_exp$gender == 1, "male", "female")
+```
+
+
+```{r  data cleaning}
+#Formatting the dataset
+matrix  =  subset(gtex, select = -c(2))
+row.names(matrix) = matrix[,1]
+matrix  =  subset(matrix, select = -c(1))
+gtex  = gtex %>% mutate(mean = rowMeans(matrix))
+gtex = gtex %>% filter(mean > 500)
+matrix  =  subset(gtex, select = -c(2))
+row.names(matrix) = matrix[,1]
+cleaned_data  =  log(subset(matrix, select = -c(1)))
+#Export to a smaller dataset for visualization
+write.csv(cleaned_data, "cleaned_data.csv")
+```
+
+
+BELOW IS TESTING CODE FOR THE VISUALIZATIONS IN THE APP
+```{r}
+#Another heatmap option
+pheatmap(corr, show_rownames = FALSE,  cluster_rows = FALSE,cluster_cols = FALSE,  show_colnames = FALSE, main = "Gene Expression Correlations")
+```
+
+```{r}
+heatmaply_cor(
+  corr,
+  colors = GnBu,
+  k_col = 1, 
+  k_row = 1,
+   show_dendrogram = c(FALSE, FALSE),
+  showticklabels = c(FALSE, FALSE),
+)
+```
+
+```{r}
+pca  =  prcomp(matrix)
+```
+
+```{r}
+p<- fviz_pca_ind(pca,
+
+    geom = "point",
+
+    addEllipses = TRUE,
+    
+    label = "none",
+    habillage=full_exp$age,
+
+    title='Principal Component Analysis')
+
+  p
+```
+
+```{r}
+canvasXpress(
+  data=matrix,
+  varAnnot=as.data.frame(full_exp$gender, row.names=rownames(full_exp)),
+  axisTickScaleFontFactor=0.6,
+  axisTitleScaleFontFactor=0.6,
+  ellipseBy="full_exp$gender",
+  colorBy="full_exp$gender",
+  graphType="Scatter3D",
+  title="3D scatter plot",
+
+  showLoessFit = FALSE)
+```
+
